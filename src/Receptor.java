@@ -37,8 +37,7 @@ public class Receptor {
     
     private boolean[] decoficarDadoCRC(boolean bits[]){
         
-        //implemente a decodificação Hemming aqui e encontre os 
-        //erros e faça as devidas correções para ter a imagem correta
+
         return null;
     }
     
@@ -58,7 +57,7 @@ public class Receptor {
         }else{
             
         }*/
-        
+
         //aqui você deve trocar o médodo decofificarDado para decoficarDadoCRC (implemente!!)
         decodificarDado(this.canal.recebeDado());
         
