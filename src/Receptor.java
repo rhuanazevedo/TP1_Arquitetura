@@ -20,7 +20,7 @@ public class Receptor {
         int codigoAscii = 0;
         int expoente = bits.length-1;
         
-        //converntendo os "bits" para valor inteiro para então encontrar o valor tabela ASCII
+        //convertendo os "bits" para valor inteiro para então encontrar o valor tabela ASCII
         for(int i = 0; i < bits.length;i++){
             if(bits[i]){
                 codigoAscii += Math.pow(2, expoente);
