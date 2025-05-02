@@ -43,13 +43,13 @@ public class Canal {
         }
         this.feedback = feedback;
     }
-    
+
     public Boolean recebeFeedback(){
         return this.feedback;
     }
-    
+
     public void conectaTransmissor(Transmissor trans){
-        this.transmissor = trans;
+        this.transmissor = transmissor;
     }
     
     public void conectaReceptor(Receptor receptor){

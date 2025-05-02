@@ -1,5 +1,10 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+
 public class Receptor {
-    
+
     //mensagem recebida pelo transmissor
     private String mensagem;
     private final Estrategia tecnica;
@@ -11,12 +16,12 @@ public class Receptor {
         this.tecnica = tecnica;
         this.canal = canal;
     }
-    
+
     public String getMensagem() {
         return mensagem;
     }
 
-    private void converteASCII(boolean[] bits){
+    private void converteASCII(boolean[] bits) {
         int codigoAscii = 0;
         int expoente = bits.length - 1;
 
@@ -31,7 +36,7 @@ public class Receptor {
         //Concatenando cada simbolo na mensagem original
         this.mensagem += (char) codigoAscii;
     }
-//
+
     private boolean decodificarDadoCRC(boolean[] bits) {
         boolean[] temp = Arrays.copyOf(bits, bits.length);
 
@@ -54,11 +59,11 @@ public class Receptor {
         boolean[] dados = Arrays.copyOf(bits, bits.length - Canal.polinomio.length + 1);
 
         converteASCII(dados);
+
         return true;
     }
 
     private boolean decodificarDadoHamming(boolean[] bits) {
-
         int divisorBits = bits.length / 7;
         boolean[] dadosOriginais = new boolean[divisorBits * 4];
 
@@ -89,7 +94,7 @@ public class Receptor {
                 posicaoErro = posicaoErro + 4;
             }
 
-            if(posicaoErro > 0 && posicaoErro <= 4){
+            if (posicaoErro > 0 && posicaoErro <= 4) {
                 bits[base + posicaoErro - 1] = !bits[base + posicaoErro - 1];
 
                 b1 = bits[base + 2];
@@ -97,8 +102,6 @@ public class Receptor {
                 b3 = bits[base + 5];
                 b4 = bits[base + 6];
 
-            }else if (posicaoErro > 7) {
-                return false;
             }
 
             dadosOriginais[cont * 4] = b1;
@@ -109,9 +112,7 @@ public class Receptor {
 
         converteASCII(dadosOriginais);
         return true;
-
     }
-
 
     //recebe os dados do transmissor
     public void receberDadoBits() {
@@ -123,14 +124,14 @@ public class Receptor {
             sucesso = decodificarDadoHamming(this.canal.recebeDado());
         }
 
-
         this.canal.enviaFeedBack(sucesso);
     }
-    
-    //
-    public void gravaMensArquivo(){
-        /*
-        aqui você deve implementar um mecanismo para gravar a mensagem em arquivo
-        */
+
+    public void gravaMensArquivo() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("src/database/mensagem.txt"))) {
+            writer.write(this.getMensagem());
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar o dado" + e.getMessage());
+        }
     }
 }

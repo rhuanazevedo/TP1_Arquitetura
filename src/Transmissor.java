@@ -1,15 +1,12 @@
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 public class Transmissor {
     private String mensagem;
     private Canal canal;
     private File arquivo;
     private Estrategia tecnica;
-
+    //Polinomio 10011
     int polinomioLength = Canal.polinomio.length;
-    int dadoLength;
 
     public Transmissor(String mensagem, Canal canal, Estrategia tecnica) {
         this.mensagem = mensagem;
@@ -21,23 +18,20 @@ public class Transmissor {
         this.arquivo = arq;
         this.canal = canal;
         this.tecnica = tecnica;
-        carregarMensagemArquivo(); //src/livro/Moby-Dick-Cap1.txt
+        carregarMensagemArquivo();
     }
 
     private void carregarMensagemArquivo() {
-
         if (!arquivo.exists()) {
             System.out.println("O arquivo não existe");
             return;
         }
         try {
             this.mensagem = new String(java.nio.file.Files.readAllBytes(arquivo.toPath()));
-
         } catch (IOException e) {
-            System.out.println("Erro ao carregar o arquibo: " + e.getMessage());
+            System.out.println("Erro ao carregar o arquivo: " + e.getMessage());
         }
     }
-
 
     //convertendo um símbolo para "vetor" de boolean (bits)
     private boolean[] streamCaracter(char simbolo) {
@@ -66,36 +60,35 @@ public class Transmissor {
         return bits;
     }
 
-    private boolean[] dadoBitsCRC(boolean bits[]) {
-        //Polinomio 100000111
-        dadoLength = bits.length;
+    private boolean[] dadoBitsCRC(boolean[] bits) {
+        //Polinomio 10011
+        int dadoLength = bits.length;
 
         boolean[] dadoCRC = new boolean[dadoLength + polinomioLength - 1];
         //Fundir o "bits[]" com os bits 0 referente ao grau do polinomio
         System.arraycopy(bits, 0, dadoCRC, 0, dadoLength);
 
-        boolean[] temp = dadoCRC.clone();
+        boolean[] resto = dadoCRC.clone();
 
         for (int i = 0; i < dadoLength; i++) {
-            if (temp[i]) {
+            if (resto[i]) {
                 for (int j = 0; j < polinomioLength; j++) {
-                    temp[i + j] ^= Canal.polinomio[j];
+                    resto[i + j] ^= Canal.polinomio[j];
                 }
             }
         }
 
-        System.arraycopy(temp, dadoLength, dadoCRC, dadoLength, polinomioLength - 1);
+        System.arraycopy(resto, dadoLength, dadoCRC, dadoLength, polinomioLength - 1);
 
         return dadoCRC;
     }
 
-    private boolean[] dadoBitsHamming(boolean bits[]) {
-
+    private boolean[] dadoBitsHamming(boolean[] bits) {
         int divisorBits = bits.length / 4;
         if (bits.length % 4 != 0) {
             divisorBits = divisorBits + 1;
         }
-        boolean[] resultado = new boolean[divisorBits * 7];
+        boolean[] dadoHamming = new boolean[divisorBits * 7];
 
         for (int cont = 0; cont < divisorBits; cont++) {
 
@@ -109,16 +102,16 @@ public class Transmissor {
             boolean h3 = b2 ^ b3 ^ b4;
 
             int base = cont * 7;
-            resultado[base] = h1;
-            resultado[base + 1] = h2;
-            resultado[base + 2] = h3;
-            resultado[base + 3] = b1;
-            resultado[base + 4] = b2;
-            resultado[base + 5] = b3;
-            resultado[base + 6] = b4;
+            dadoHamming[base] = h1;
+            dadoHamming[base + 1] = h2;
+            dadoHamming[base + 2] = b1;
+            dadoHamming[base + 3] = h3;
+            dadoHamming[base + 4] = b2;
+            dadoHamming[base + 5] = b3;
+            dadoHamming[base + 6] = b4;
         }
 
-        return resultado;
+        return dadoHamming;
 
     }
 
@@ -131,6 +124,7 @@ public class Transmissor {
     }
 
     public void enviaDado() {
+        System.out.println("Enviando dado...");
         for (int i = 0; i < this.mensagem.length(); i++) {
             do {
                 boolean[] bits = streamCaracter(this.mensagem.charAt(i));
@@ -145,5 +139,6 @@ public class Transmissor {
 
             } while (this.canal.recebeFeedback() == false);
         }
+        System.out.println("Dado enviado com sucesso!.");
     }
 }
