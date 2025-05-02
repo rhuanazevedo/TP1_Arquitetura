@@ -7,9 +7,8 @@ public class Transmissor {
     private Canal canal;
     private File arquivo;
     private Estrategia tecnica;
-    //Polinomio 100000111
-    boolean[] polinomio = {true, false, false, false, false, false, true, true, true};
-    int polinomioLength = polinomio.length;
+
+    int polinomioLength = Canal.polinomio.length;
     int dadoLength;
 
     public Transmissor(String mensagem, Canal canal, Estrategia tecnica) {
@@ -77,10 +76,10 @@ public class Transmissor {
 
         boolean[] temp = dadoCRC.clone();
 
-        for(int i = 0; i < dadoLength; i++){
-            if(temp[i]){
-                for(int j = 0; j < polinomioLength; j++){
-                    temp[i+j] ^= polinomio[j];
+        for (int i = 0; i < dadoLength; i++) {
+            if (temp[i]) {
+                for (int j = 0; j < polinomioLength; j++) {
+                    temp[i + j] ^= Canal.polinomio[j];
                 }
             }
         }
@@ -93,12 +92,12 @@ public class Transmissor {
     private boolean[] dadoBitsHamming(boolean bits[]) {
 
         int divisorBits = bits.length / 4;
-        if(bits.length % 4 != 0){
+        if (bits.length % 4 != 0) {
             divisorBits = divisorBits + 1;
         }
         boolean[] resultado = new boolean[divisorBits * 7];
 
-        for(int cont = 0; cont < divisorBits; cont++) {
+        for (int cont = 0; cont < divisorBits; cont++) {
 
             boolean b1 = getBit(bits, cont * 4);
             boolean b2 = getBit(bits, cont * 4 + 1);
@@ -123,7 +122,7 @@ public class Transmissor {
 
     }
 
-    private boolean getBit (boolean[] bits, int index){
+    private boolean getBit(boolean[] bits, int index) {
         if (index < bits.length) {
             return bits[index];
         } else {
@@ -134,20 +133,17 @@ public class Transmissor {
     public void enviaDado() {
         for (int i = 0; i < this.mensagem.length(); i++) {
             do {
-                boolean bits[] = streamCaracter(this.mensagem.charAt(i));
+                boolean[] bits = streamCaracter(this.mensagem.charAt(i));
 
+                if (this.tecnica == Estrategia.CRC) {
+                    bits = dadoBitsCRC(bits);
+                } else if (this.tecnica == Estrategia.HAMMING) {
+                    bits = dadoBitsHamming(bits);
+                }
 
-                /*-------AQUI você deve adicionar os bits do códico CRC para contornar os problemas de ruidos
-                            você pode modificar o metodo anterior também
-                    boolean bitsCRC[] = dadoBitsCRC(bits);
-                */
-
-                //enviando a mensagem "pela rede" para o receptor (uma forma de testarmos esse método)
                 this.canal.enviarDado(bits);
+
             } while (this.canal.recebeFeedback() == false);
-
-
-            //o que faremos com o indicador quando houver algum erro? qual ação vamos tomar com o retorno do receptor
         }
     }
 }

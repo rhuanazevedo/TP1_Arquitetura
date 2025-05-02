@@ -15,56 +15,116 @@ public class Receptor {
     public String getMensagem() {
         return mensagem;
     }
- 
-    private boolean decodificarDado(boolean bits[]){
+
+    private void converteASCII(boolean[] bits){
         int codigoAscii = 0;
-        int expoente = bits.length-1;
-        
+        int expoente = bits.length - 1;
+
         //convertendo os "bits" para valor inteiro para então encontrar o valor tabela ASCII
-        for(int i = 0; i < bits.length;i++){
-            if(bits[i]){
+        for (int i = 0; i < bits.length; i++) {
+            if (bits[i]) {
                 codigoAscii += Math.pow(2, expoente);
             }
             expoente--;
         }
-        
-        //concatenando cada simbolo na mensagem original
-        this.mensagem += (char)codigoAscii;
-        
-        //esse retorno precisa ser pensado... será que o dado sempre chega sem ruído???
+
+        //Concatenando cada simbolo na mensagem original
+        this.mensagem += (char) codigoAscii;
+    }
+//
+    private boolean decodificarDadoCRC(boolean[] bits) {
+        boolean[] temp = Arrays.copyOf(bits, bits.length);
+
+        for (int i = 0; i <= bits.length - Canal.polinomio.length; i++) {
+            if (temp[i]) {
+                for (int j = 0; j < Canal.polinomio.length; j++) {
+                    temp[i + j] ^= Canal.polinomio[j];
+                }
+            }
+        }
+
+        // Verifica se o restante (CRC) é diferente de zero
+        for (int i = bits.length - Canal.polinomio.length + 1; i < bits.length; i++) {
+            if (temp[i]) {
+                return false;
+            }
+        }
+
+        // Extração dos dados originais (sem CRC)
+        boolean[] dados = Arrays.copyOf(bits, bits.length - Canal.polinomio.length + 1);
+
+        converteASCII(dados);
         return true;
     }
-    
-    private boolean[] decoficarDadoCRC(boolean bits[]){
-        
 
-        return null;
+    private boolean decodificarDadoHamming(boolean[] bits) {
+
+        int divisorBits = bits.length / 7;
+        boolean[] dadosOriginais = new boolean[divisorBits * 4];
+
+        for (int cont = 0; cont < divisorBits; cont++) {
+
+            int base = cont * 7;
+            boolean h1 = bits[base];
+            boolean h2 = bits[base + 1];
+            boolean b1 = bits[base + 2];
+            boolean h3 = bits[base + 3];
+            boolean b2 = bits[base + 4];
+            boolean b3 = bits[base + 5];
+            boolean b4 = bits[base + 6];
+
+            // Bits de verificação
+            boolean vf1 = h1 ^ b1 ^ b2 ^ b4;
+            boolean vf2 = h2 ^ b1 ^ b3 ^ b4;
+            boolean vf3 = h3 ^ b2 ^ b3 ^ b4;
+
+            int posicaoErro = 0;
+            if (vf1) {
+                posicaoErro++;
+            }
+            if (vf2) {
+                posicaoErro = posicaoErro + 2;
+            }
+            if (vf3) {
+                posicaoErro = posicaoErro + 4;
+            }
+
+            if(posicaoErro > 0 && posicaoErro <= 4){
+                bits[base + posicaoErro - 1] = !bits[base + posicaoErro - 1];
+
+                b1 = bits[base + 2];
+                b2 = bits[base + 4];
+                b3 = bits[base + 5];
+                b4 = bits[base + 6];
+
+            }else if (posicaoErro > 7) {
+                return false;
+            }
+
+            dadosOriginais[cont * 4] = b1;
+            dadosOriginais[cont * 4 + 1] = b2;
+            dadosOriginais[cont * 4 + 2] = b3;
+            dadosOriginais[cont * 4 + 3] = b4;
+        }
+
+        converteASCII(dadosOriginais);
+        return true;
+
     }
-    
-    private boolean[] decoficarDadoHammig(boolean bits[]){
-        
-        //implemente a decodificação Hemming aqui e encontre os 
-        //erros e faça as devidas correções para ter a imagem correta
-        return null;
-    }
-    
-    
+
+
     //recebe os dados do transmissor
-    public void receberDadoBits(){
-        
-        /*if(this.tecnica == Estrategia.CRC){
-            
-        }else{
-            
-        }*/
+    public void receberDadoBits() {
+        boolean sucesso = false;
 
-        //aqui você deve trocar o médodo decofificarDado para decoficarDadoCRC (implemente!!)
-        decodificarDado(this.canal.recebeDado());
-        
-        
-        
-        //será que sempre teremos sucesso nessa recepção?????
-        this.canal.enviaFeedBack(true);
+        if (this.tecnica == Estrategia.CRC) {
+            sucesso = decodificarDadoCRC(this.canal.recebeDado());
+        } else {
+            sucesso = decodificarDadoHamming(this.canal.recebeDado());
+        }
+
+
+        this.canal.enviaFeedBack(sucesso);
     }
     
     //

@@ -4,7 +4,8 @@ import java.util.Random;
 
 public class Canal {
 
-    boolean[] polinomio = {true, false, false, false, false, false, true, true, true};
+    //Polinomio 10011
+    static boolean[] polinomio = {true, false, false, true, true};
     private boolean bits[];
     private Boolean feedback; //indica resultado correto do dado ou não
     private final double probRuido; //probabilidade de gerar erro em 1 único bit
@@ -17,7 +18,7 @@ public class Canal {
         this.probRuido = probRuido;
     }
     
-    public void enviarDado(boolean dados[]){
+    public void enviarDado(boolean[] dados){
         this.feedback = null;
         this.bits = dados;
         geradorRuido(this.bits);
