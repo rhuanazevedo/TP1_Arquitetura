@@ -5,14 +5,8 @@ public class Transmissor {
     private Canal canal;
     private File arquivo;
     private Estrategia tecnica;
-    //Polinomio 10011
+    //O Polinômio utilizado é o 10011
     int polinomioLength = Canal.polinomio.length;
-
-    public Transmissor(String mensagem, Canal canal, Estrategia tecnica) {
-        this.mensagem = mensagem;
-        this.canal = canal;
-        this.tecnica = tecnica;
-    }
 
     public Transmissor(File arq, Canal canal, Estrategia tecnica) {
         this.arquivo = arq;
@@ -33,23 +27,21 @@ public class Transmissor {
         }
     }
 
-    //convertendo um símbolo para "vetor" de boolean (bits)
-    private boolean[] streamCaracter(char simbolo) {
-
-        //cada símbolo da tabela ASCII é representado com 8 bits
+    //Convertendo um símbolo para "vetor" de boolean (bits)
+    private boolean[] streamCaracter(char simbolo){
+        //Cada símbolo da tabela ASCII é representado com 8 bits
         boolean bits[] = new boolean[8];
-
-        //convertendo um char para int (encontramos o valor do mesmo na tabela ASCII)
+        //Convertendo um char para int (encontramos o valor do mesmo na tabela ASCII)
         int valorSimbolo = (int) simbolo;
 
-        //caracteres inválidos para UTF-8
-        if (valorSimbolo > 255) {
+        //Caracteres inválidos para UTF-8
+        if(valorSimbolo > 255){
             valorSimbolo = 0; //quebra de linha
         }
         int indice = 7;
 
-        //convertendo cada "bits" do valor da tabela ASCII
-        while (valorSimbolo >= 2) {
+        //Convertendo cada "bits" do valor da tabela ASCII
+        while(valorSimbolo >= 2){
             int resto = valorSimbolo % 2;
             valorSimbolo /= 2;
             bits[indice] = (resto == 1);
@@ -61,23 +53,25 @@ public class Transmissor {
     }
 
     private boolean[] dadoBitsCRC(boolean[] bits) {
-        //Polinomio 10011
+        //O Polinômio utilizado é 10011
         int dadoLength = bits.length;
 
+        //Novo vetor para armazenar os bits a serem transmitidos + os bits CRC
         boolean[] dadoCRC = new boolean[dadoLength + polinomioLength - 1];
-        //Fundir o "bits[]" com os bits 0 referente ao grau do polinomio
+
+        //Fundir os 8 bits passados como parâmetro com a quantidade de bits referente ao grau do polinomio
         System.arraycopy(bits, 0, dadoCRC, 0, dadoLength);
 
         boolean[] resto = dadoCRC.clone();
-
         for (int i = 0; i < dadoLength; i++) {
+            //1 = true | 0 = false
             if (resto[i]) {
                 for (int j = 0; j < polinomioLength; j++) {
                     resto[i + j] ^= Canal.polinomio[j];
                 }
             }
         }
-
+        //Cópia dos bits CRC para dadoCRC[]
         System.arraycopy(resto, dadoLength, dadoCRC, dadoLength, polinomioLength - 1);
 
         return dadoCRC;
@@ -127,14 +121,18 @@ public class Transmissor {
         System.out.println("Enviando dado...");
         for (int i = 0; i < this.mensagem.length(); i++) {
             do {
+                //Converter o caractere para sequência de 8 bits
                 boolean[] bits = streamCaracter(this.mensagem.charAt(i));
 
                 if (this.tecnica == Estrategia.CRC) {
+                    //Calcular bits CRC
                     bits = dadoBitsCRC(bits);
                 } else if (this.tecnica == Estrategia.HAMMING) {
+                    //Calcular bits Hamming
                     bits = dadoBitsHamming(bits);
                 }
 
+                //Enviar dado para o Receptor
                 this.canal.enviarDado(bits);
 
             } while (this.canal.recebeFeedback() == false);

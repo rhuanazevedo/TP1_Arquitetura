@@ -17,8 +17,8 @@ public class Canal {
     public Canal(double probRuido) {
         this.probRuido = probRuido;
     }
-    
-    public void enviarDado(boolean[] dados){
+
+    public void enviarDado(boolean dados[]){
         this.feedback = null;
         this.bits = dados;
         geradorRuido(this.bits);
@@ -29,17 +29,17 @@ public class Canal {
         }
         this.receptor.receberDadoBits();
     }
-    
+
     public boolean[] recebeDado(){
         return this.bits;
     }
-    
+
     public void enviaFeedBack(Boolean feedback){
         this.bits = null;
         try {
             Thread.sleep(geradorAleatorio.nextInt(20));
         } catch (InterruptedException ex) {
-            System.err.println("processo interrompido durante o envio do dado");
+            System.err.println("Processo interrompido durante o envio do dado");
         }
         this.feedback = feedback;
     }
@@ -49,22 +49,20 @@ public class Canal {
     }
 
     public void conectaTransmissor(Transmissor trans){
-        this.transmissor = transmissor;
+        this.transmissor = trans;
     }
-    
+
     public void conectaReceptor(Receptor receptor){
         this.receptor = receptor;
     }
-    
-    
+
     //não modifique (seu objetivo é corrigir esse erro gerado no receptor)
     private void geradorRuido(boolean bits[]){
-
         //pode gerar um erro ou não..
         if(this.probRuido > 0.0 && this.geradorAleatorio.nextDouble() < this.probRuido){
             int indice = this.geradorAleatorio.nextInt(this.bits.length);
             bits[indice] = !bits[indice];
         }
-        
     }
+
 }
