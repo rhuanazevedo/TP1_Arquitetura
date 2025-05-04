@@ -94,7 +94,7 @@ public class Receptor {
                 posicaoErro = posicaoErro + 4;
             }
 
-            if (posicaoErro > 0 && posicaoErro <= 4) {
+            if (posicaoErro > 0 && posicaoErro <= 7) {
                 bits[base + posicaoErro - 1] = !bits[base + posicaoErro - 1];
 
                 b1 = bits[base + 2];
